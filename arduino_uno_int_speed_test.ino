@@ -14,7 +14,7 @@ const uint8_t PIN_A = 5, PIN_B = 6, PIN_Z = 7;
 
 #define ENCODER_USE_PORT
 
-#define USE_INLINE
+// #define USE_INLINE
 
 #if defined(USE_INLINE)
 #define OPTIONAL_INLINE inline __attribute__((always_inline))
@@ -345,6 +345,7 @@ void isr_position_call_increment() {
 }
 
 void setup() {
+  Serial.begin(9600);
   pinMode(pin_scope, OUTPUT);
   digitalWrite(pin_scope, LOW);
   pinMode(pin_interrupt, INPUT_PULLUP);
@@ -355,11 +356,133 @@ void setup() {
   // attachInterrupt(digitalPinToInterrupt(pin_interrupt), isr_speed_16, LOW);
   // attachInterrupt(digitalPinToInterrupt(pin_interrupt), isr_speed_32, LOW);
   // attachInterrupt(digitalPinToInterrupt(pin_interrupt), isr_speed_call_increment, LOW);
-  attachInterrupt(digitalPinToInterrupt(pin_interrupt), isr_position_call_increment, LOW);
+  // attachInterrupt(digitalPinToInterrupt(pin_interrupt), isr_position_call_increment, LOW);
   // attachInterrupt(digitalPinToInterrupt(pin_interrupt), isr_basic_digitalread_8, LOW);
   // attachInterrupt(digitalPinToInterrupt(pin_interrupt), isr_basic_portread_8, LOW);
+
+  // Mode : see Table 18-8 in datasheet section 18.11
+  // TCCR2A=
+  // 7:COM2A1
+  // 6:COM2A0
+  // 5:COM2B1
+  // 4:COM2B0
+  // 3:reserved
+  // 2:reserved
+  // 1:WGM21
+  // 0:WGM20
+  // bitClear(TCCR2A, WGM20);
+  // bitClear(TCCR2A, WGM21);
+  // bitClear(TCCR2B, WGM22);
+  // TCCRBA=
+  // 7:FOC2A
+  // 6:FOC2B
+  // 5:reserved
+  // 4:reserved
+  // 3:WGM22
+  // 2:CS22
+  // 1:CS21
+  // 0:CS20
+  // TIMSK= interrupt mask
+  // 7-3:reserved
+  // 2:OCIE2B
+  // 1:OCIE2A
+  // 0:TOIE2
+  // TIFR2= interrupt flag
+  // 7-3:reserved
+  // 2:OCF2B
+  // 1:OCF2A
+  // 0:TOV2
+
+  // normal, no comparison output, no force output compare, no interrupt
+  // prescaling : 000 = stopped, 001 none then 8/32/64/128/256/1024
+  TIMSK2 = 0x00;
+  TIFR2 = 0x00;
+  TCCR2A = 0x00;
+  TCCR2B = 0x01;
+
+
+  TCCR1A = 0x00;
+  TCCR1B = 0x00;
 }
 
 void loop() {
+  uint16_t count;
+
+  Serial.println("--------");
+
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCCR1C = 0;
+  TCNT1H = 0;
+  TCNT1L = 0;
+  bitClear(TIFR1, TOV1);
+  TCCR1B = 1;
+
+  global_quadrature.increment_counter();
+
+  TCCR1B = 0;
+  count = (TCNT1H << 8) | TCNT1L;
+  Serial.print("tov1=");
+  Serial.print(bitRead(TIFR1, TOV1));
+  bitClear(TIFR1, TOV1);
+  Serial.print(" ctr=");
+  Serial.println(count);
+
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCCR1C = 0;
+  TCNT1H = 0;
+  TCNT1L = 0;
+  bitClear(TIFR1, TOV1);
+  TCCR1B = 1;
+
+  global_quadrature.update_state_from_inputs();
+
+  TCCR1B = 0;
+  count = (TCNT1H << 8) | TCNT1L;
+  Serial.print("tov1=");
+  Serial.print(bitRead(TIFR1, TOV1));
+  bitClear(TIFR1, TOV1);
+  Serial.print(" incr=");
+  Serial.println(count);
+
+
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCCR1C = 0;
+  TCNT1H = 0;
+  TCNT1L = 0;
+  bitClear(TIFR1, TOV1);
+  TCCR1B = 1;
+
+  global_quadrature.update_counter_from_quadrature();
+
+  TCCR1B = 0;
+  count = (TCNT1H << 8) | TCNT1L;
+  Serial.print("tov1=");
+  Serial.print(bitRead(TIFR1, TOV1));
+  bitClear(TIFR1, TOV1);
+  Serial.print(" state=");
+  Serial.println(count);
+
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCCR1C = 0;
+  TCNT1H = 0;
+  TCNT1L = 0;
+  bitClear(TIFR1, TOV1);
+  TCCR1B = 1;
+
+  global_quadrature.update_state_from_inputs();
+  global_quadrature.update_counter_from_quadrature();
+
+  TCCR1B = 0;
+  count = (TCNT1H << 8) | TCNT1L;
+  Serial.print("tov1=");
+  Serial.print(bitRead(TIFR1, TOV1));
+  bitClear(TIFR1, TOV1);
+  Serial.print(" incr+state=");
+  Serial.println(count);
+
   delay(1000);
 }
