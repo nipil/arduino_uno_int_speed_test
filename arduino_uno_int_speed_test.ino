@@ -8,9 +8,9 @@ const uint8_t pin_interrupt = 2;
 
 const uint8_t PIN_A = 5, PIN_B = 6, PIN_Z = 7;
 
-#define PIN_A_READ (PORTD & _BV(PD5))
-#define PIN_B_READ (PORTD & _BV(PD6))
-#define PIN_Z_READ (PORTD & _BV(PD7))
+#define PIN_A_READ (PIND & _BV(PD5))
+#define PIN_B_READ (PIND & _BV(PD6))
+#define PIN_Z_READ (PIND & _BV(PD7))
 
 #define ENCODER_USE_PORT
 

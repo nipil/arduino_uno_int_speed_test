@@ -88,8 +88,8 @@ with inline or without is the same for below : not enough calls to unwrap
 
     timer1 no prescaler :
       quadrature.increment_counter --> 22
-      quadrature.update_state_from_inputs --> 28
-      quadrature.update_counter_from_quadrature --> 79
+      quadrature.update_state_from_inputs --> 35
+      quadrature.update_counter_from_quadrature --> 87
       (same without always_inline !)
 
 
